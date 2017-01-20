@@ -6,6 +6,8 @@
 package tp1_crypto;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -20,59 +22,61 @@ public class TP1_Crypto {
     public static void main(String[] args) {
         // TODO code application logic here
         
+        // Gonna broke RSA
+        int e = 3;
+        BigInteger be = BigInteger.valueOf(3);
+        Map<String, BigInteger> s = gen(be);
+        int m = 12345;
+        int o = 1;
+        
+        BigInteger c1 = Enc(s.get("pk"), s.get("n"), BigInteger.valueOf(m));        
+        BigInteger c2 = Enc(s.get("pk"), s.get("n"), BigInteger.valueOf(m+o));
+        
+        System.out.println(BigInteger.valueOf((long) ((Math.pow(m+1, 3) + 2*Math.pow(m, 3)-1)/(Math.pow(m+1, 3) - Math.pow(m, 3) + 2))).mod(s.get("n")));
+        
+        BigInteger nom = c2.pow(e).add(c1.pow(e).multiply(BigInteger.valueOf(2))).subtract(BigInteger.ONE);
+        BigInteger denom = c2.pow(e).subtract(c1.pow(e)).add(BigInteger.valueOf(2));
+        
+        System.out.println(nom.multiply(be).divide(denom).mod(s.get("n")).add(BigInteger.valueOf(o)));
+        
+        
+
+    }
+    
+    static BigInteger Enc(BigInteger pk, BigInteger n, BigInteger message) {
+        return message.modPow(pk, n);
+    }
+    
+    static BigInteger Dec(BigInteger sk, BigInteger n, BigInteger message) {
+        return message.modPow(sk, n);
+    }
+    
+    static Map<String, BigInteger> gen(BigInteger e) {
+        
         Random rand = new Random(System.currentTimeMillis());
+        BigInteger n, on;
         
-        //z48
-        for(int i=1;i<48;i++) {
-            for(int j=1;j<48;j++) {
-                if((i*j)%48==1) System.out.println(i + " " + j);
-            }
-        }
-        
-        //z53
-        for(int i=1;i<53;i++) {
-            if(54%i==0) System.out.println(i);
-        }
-        /*
-        for(int i=100000000;i<200000000;i++) {
-            if(primaireFermat(i)) {
-                System.out.println("primaire " + i + ": " + primaireFermat(i));
-            }
-        }*/
-        
-        BigInteger p = new BigInteger(512, 1, rand);        
-        BigInteger q = new BigInteger(512, 1, rand);
-        
-        System.out.println(p);
-        System.out.println(q);
-        
-        System.out.println("primaire " + p + ": " + primaireFermat(p));
-        System.out.println("primaire " + q + ": " + primaireFermat(q));
-        
-        BigInteger n = p.multiply(q);
-        BigInteger on = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
-       
-        System.out.println(n);
-        System.out.println(on);
-        
-        BigInteger e;
+        Map<String, BigInteger> values = new HashMap<>();
         do {
-            e = new BigInteger(16,1,rand);
+            BigInteger p = new BigInteger(512, 1, rand);        
+            BigInteger q = new BigInteger(512, 1, rand);
+
+            n = p.multiply(q);
+            on = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+        
+            if(e.compareTo(BigInteger.ZERO) == 0) {
+                e = new BigInteger(16,1,rand);
+            }
+
         } while(!e.gcd(on).equals(BigInteger.ONE));
         
-        System.out.println(e);
         BigInteger d = e.modInverse(on);
-        System.out.println(d);
-        System.out.println(d.multiply(e).mod(on));
+
+        values.put("n", n);
+        values.put("pk", e);
+        values.put("sk", d);
         
-        for(int i = 0;i<10;i++) {
-            BigInteger x = BigInteger.valueOf(i);
-            BigInteger X = x.modPow(e, n);
-            System.out.println(X.modPow(d, n));
-        }
-        
-        
-        
+        return values;
         
     }
     
